@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATABASE_PATH=/data/talent_loop.db
+      # Uncomment and fill in to activate real integrations — no code
+      # changes needed, app/integrations.py picks these up automatically:
+      # - FACEBOOK_PAGE_ACCESS_TOKEN=
+      # - FACEBOOK_PAGE_ID=
+      # - LINKEDIN_ACCESS_TOKEN=
+      # - WHATSAPP_BUSINESS_TOKEN=
+      # - WHATSAPP_PHONE_NUMBER_ID=
+      # - TELEGRAM_BOT_TOKEN=
+      # - SMTP_HOST=
+      # - SMTP_PORT=587
+      # - SMTP_USER=
+      # - SMTP_PASS=
+      # - ANTHROPIC_API_KEY=
+    volumes:
+      - talent_loop_data:/data
+    restart: unless-stopped
+
+  # Optional production database. The app runs on SQLite by default
+  # (DATABASE_PATH above); this service is here for the Postgres
+  # migration path described in README.md — not wired up automatically,
+  # since that requires the psycopg2 driver (see app/db.py docstring).
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=talent_loop
+      - POSTGRES_USER=talent_loop
+      - POSTGRES_PASSWORD=changeme
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    profiles: ["postgres"]
+
+volumes:
+  talent_loop_data:
+  postgres_data:
