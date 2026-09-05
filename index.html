@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talent Loop — AI Recruitment OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2233; --ink-soft:#4B5170; --paper:#F6F6F3; --paper-raised:#FFFFFF; --line:#E2E2E6;
+    --amber:#C6862F; --amber-soft:#F3E4C9; --teal:#2B8A79; --teal-soft:#DBEEEA;
+    --coral:#B85C48; --coral-soft:#F2DED7; --muted:#6D7086; --radius-s:4px; --radius-m:10px;
+    --sp-1:4px; --sp-2:8px; --sp-3:14px; --sp-4:20px; --sp-5:32px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.55;}
+  h1,h2,h3,.serif{font-family:'Fraunces',serif;font-feature-settings:'ss01';}
+  .mono{font-family:'IBM Plex Mono',monospace;letter-spacing:-.2px;}
+  button{font-family:inherit;cursor:pointer;}
+  a{color:var(--ink);}
+  @media (prefers-reduced-motion: no-preference){
+    .btn, nav button, .cand-card, .bar-fill, .funnel-fill{transition:background-color .15s ease, border-color .15s ease, opacity .15s ease, width .4s ease;}
+  }
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:2px;}
+
+  .shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh;}
+  .sidebar{background:var(--ink);color:#E7E8F0;padding:26px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+    border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--amber),var(--teal)) 1;}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:30px;padding:0 8px;}
+  .brand .mark{width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--amber);position:relative;}
+  .brand .mark::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--teal);}
+  .brand h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.1px;}
+  nav{display:flex;flex-direction:column;gap:1px;flex:1;}
+  nav button{background:none;border:none;border-left:2px solid transparent;color:#B6B9CC;text-align:left;
+    padding:8px 12px;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;border-radius:0 3px 3px 0;}
+  nav button:hover{background:rgba(255,255,255,.05);color:#fff;}
+  nav button.active{background:rgba(255,255,255,.07);color:#fff;border-left-color:var(--amber);font-weight:500;}
+  nav button .badge{background:var(--coral);color:#fff;font-size:10.5px;padding:1px 6px;border-radius:10px;}
+  .sidebar-foot{border-top:1px solid rgba(255,255,255,.12);padding-top:14px;margin-top:14px;font-size:12px;color:#9B9EB4;}
+  .sidebar-foot b{color:#E7E8F0;}
+
+  main{padding:32px 42px 64px;max-width:1180px;}
+  .topline{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;gap:20px;}
+  .topline h2{font-size:25px;margin:0 0 4px;font-weight:600;}
+  .topline p{margin:0;color:var(--muted);font-size:13.5px;}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  .kpi{background:var(--paper-raised);border:1px solid var(--line);border-top:3px solid var(--ink);border-radius:var(--radius-m);padding:16px 18px;}
+  .kpi .label{font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+  .kpi .value{font-family:'Fraunces',serif;font-size:30px;font-weight:600;line-height:1;}
+  .kpi .sub{font-size:12px;margin-top:6px;}
+  .up{color:var(--teal);} .down{color:var(--coral);}
+
+  .panel{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-m);padding:22px 24px;margin-bottom:20px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+  .panel-head h3{margin:0;font-size:15.5px;font-weight:600;}
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;letter-spacing:.2px;border-bottom:1px solid var(--line);padding:0 8px 8px;}
+  td{padding:10px 8px;border-bottom:1px solid #EFEFF1;vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:#FAFAF8;}
+
+  .pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11.5px;font-weight:500;}
+  .pill.new{background:#E9E9EE;color:var(--ink-soft);}
+  .pill.contacted{background:var(--amber-soft);color:#82551A;}
+  .pill.screening{background:#E1E7F7;color:#2C4A85;}
+  .pill.qualified{background:var(--teal-soft);color:#1E6D5E;}
+  .pill.interview{background:#EBE0F5;color:#663A8E;}
+  .pill.hired{background:var(--teal);color:#fff;}
+  .pill.rejected{background:var(--coral-soft);color:#8A3A28;}
+  .pill.completed{background:var(--teal-soft);color:#1E6D5E;}
+  .pill.scheduled{background:#E1E7F7;color:#2C4A85;}
+  .pill.no-show{background:var(--coral-soft);color:#8A3A28;}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
+  .dot.g{background:var(--teal);} .dot.y{background:var(--amber);} .dot.r{background:var(--coral);}
+
+  .btn{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:8px 15px;border-radius:var(--radius-s);font-size:13px;font-weight:500;}
+  .btn:hover{background:var(--ink-soft);border-color:var(--ink-soft);}
+  .btn.ghost{background:none;color:var(--ink);border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--paper);border-color:var(--ink-soft);}
+  .btn.amber{background:var(--amber);border-color:var(--amber);color:#2E1D02;}
+  .btn.amber:hover{background:#B37827;border-color:#B37827;}
+  .btn.small{padding:5px 11px;font-size:12px;}
+  .btn:disabled{opacity:.45;cursor:default;}
+
+  input[type=text],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius-s);font-family:inherit;font-size:13px;background:#fff;color:var(--ink);}
+  input:focus,textarea:focus,select:focus{border-color:var(--ink-soft);}
+  label{font-size:11.5px;color:var(--muted);display:block;margin:10px 0 5px;font-weight:500;}
+  .row{display:flex;gap:10px;} .row>*{flex:1;}
+
+  .cand-card{border:1px solid var(--line);border-radius:var(--radius-m);padding:15px 17px;margin-bottom:10px;background:#fff;}
+  .cand-card:hover{border-color:#D2D3DA;}
+  .cand-card .top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .cand-card h4{margin:0 0 2px;font-size:14.5px;font-weight:600;}
+  .cand-card .meta{color:var(--muted);font-size:12px;}
+  .score{font-family:'Fraunces',serif;font-weight:600;font-size:21px;}
+  .score.hi{color:var(--teal);} .score.mid{color:var(--amber);} .score.lo{color:var(--coral);}
+  .tag{display:inline-block;background:#EFEFF2;border-radius:10px;padding:1.5px 9px;font-size:11px;margin:6px 4px 0 0;color:var(--ink-soft);}
+  .why{font-size:12.5px;margin-top:9px;color:var(--ink-soft);line-height:1.5;}
+  .why b{color:var(--ink);}
+
+  .copilot{display:grid;grid-template-columns:1fr 300px;gap:18px;height:calc(100vh - 150px);}
+  .chatwrap{display:flex;flex-direction:column;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-m);overflow:hidden;}
+  .chatlog{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+  .msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:13.5px;}
+  .msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:3px;}
+  .msg.ai{align-self:flex-start;background:#EFEFF2;color:var(--ink);border-bottom-left-radius:3px;}
+  .chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);}
+  .chat-input input{flex:1;}
+  .suggest{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px;}
+  .suggest button{background:#EFEFF2;border:none;border-radius:14px;padding:5px 11px;font-size:12px;color:var(--ink-soft);}
+  .suggest button:hover{background:#E4E4EA;}
+
+  .approval-card{border:1px solid var(--line);border-left:3px solid var(--amber);background:var(--paper-raised);border-radius:var(--radius-m);padding:13px 15px;margin-bottom:10px;font-size:12.5px;}
+  .approval-card .hdr{font-weight:600;margin-bottom:4px;}
+  .approval-card .acts{display:flex;gap:8px;margin-top:10px;}
+  .empty{color:var(--muted);text-align:center;padding:32px 10px;font-size:13px;}
+  .note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .bar-track{background:#EDEDF0;border-radius:6px;height:7px;overflow:hidden;margin-top:6px;}
+  .bar-fill{height:100%;background:var(--teal);}
+  .funnel-row{display:grid;grid-template-columns:120px 1fr 50px;gap:10px;align-items:center;margin-bottom:9px;font-size:12.5px;}
+  .funnel-bar{background:#EDEDF0;border-radius:4px;height:16px;overflow:hidden;}
+  .funnel-fill{height:100%;background:linear-gradient(90deg,var(--ink),var(--amber));}
+
+  .login-shell{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--paper);}
+  .login-brand{background:var(--ink);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;overflow:hidden;}
+  .login-brand::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--amber),var(--teal));}
+  .login-brand .mark-lg{width:44px;height:44px;border-radius:50%;border:3px solid var(--amber);position:relative;margin-bottom:24px;}
+  .login-brand .mark-lg::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--teal);}
+  .login-brand h1{font-size:32px;margin:0 0 14px;font-weight:600;}
+  .login-brand p{color:#B6B9CC;font-size:14.5px;max-width:340px;line-height:1.6;margin:0;}
+  .login-form-wrap{display:flex;align-items:center;justify-content:center;padding:40px;}
+  .login-card{width:340px;}
+  .login-card h2{font-size:20px;margin:0 0 4px;font-weight:600;}
+  .login-card p{color:var(--muted);margin:0 0 22px;font-size:13px;}
+  .demo-creds{margin-top:18px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;line-height:1.7;}
+  .err{color:var(--coral);font-size:12.5px;margin-top:8px;}
+  @media (max-width: 860px){
+    .login-shell{grid-template-columns:1fr;}
+    .login-brand{padding:36px;min-height:220px;}
+  }
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,34,51,.5);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .modal{background:#fff;border-radius:var(--radius-m);width:420px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+
+  @media (max-width: 900px){
+    .shell{grid-template-columns:1fr;}
+    .sidebar{position:relative;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:14px 16px;}
+    .brand{margin-bottom:0;padding:0;}
+    nav{flex-direction:row;flex:none;margin-left:20px;}
+    .sidebar-foot{display:none;}
+    main{padding:16px;}
+    .kpis, .grid2, .row{grid-template-columns:1fr;}
+    .row{display:flex;flex-direction:column;}
+    .copilot{grid-template-columns:1fr;height:auto;}
+    .chatwrap{height:60vh;}
+    .topline{flex-direction:column;align-items:flex-start;gap:10px;}
+    table{font-size:12px;}
+    th, td{padding:7px 5px;}
+    .modal{width:92vw;}
+  }
+</style>
+
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Talent Loop">
+<meta name="theme-color" content="#1E2233">
+
+</head>
+<body>
+<div id="root"></div>
+<script>
+const API = "/api";
+let TOKEN = localStorage.getItem("tl_token") || null;
+let ME = null;
+let route = "dashboard";
+let chatMessages = [{role:"ai", text:"Ask me things like \"find German candidates for J1\", \"who needs follow-up\", \"why is the campaign underperforming\", or \"create a campaign for J3\"."}];
+
+async function api(path, opts={}){
+  const headers = opts.headers || {};
+  if (TOKEN) headers["Authorization"] = "Bearer " + TOKEN;
+  if (opts.body) headers["Content-Type"] = "application/json";
+  const res = await fetch(API+path, {...opts, headers});
+  if (res.status===401){ TOKEN=null; ME=null; localStorage.removeItem("tl_token"); paint(); throw new Error("unauthorized"); }
+  return res.json();
+}
+
+function el(html){ const d=document.createElement("div"); d.innerHTML=html.trim(); return d.firstChild; }
+
+// ---------- Auth ----------
+async function login(username, password){
+  const res = await fetch(API+"/auth/login", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username,password})});
+  const data = await res.json();
+  if (data.token){
+    TOKEN = data.token; ME = data;
+    localStorage.setItem("tl_token", TOKEN);
+    await loadTeamMembers();
+    paint();
+  } else {
+    document.getElementById("loginErr").textContent = "Invalid username or password.";
+  }
+}
+function logout(){ TOKEN=null; ME=null; localStorage.removeItem("tl_token"); paint(); }
+
+function renderLogin(){
+  const root = document.getElementById("root");
+  root.innerHTML = "";
+  root.appendChild(el(`
+    <div class="login-shell">
+      <div class="login-brand">
+        <div class="mark-lg"></div>
+        <h1>Talent Loop</h1>
+        <p>The operating system for a recruitment call-center team — candidates, campaigns, and the AI copilot that ties them together, all in one place.</p>
+      </div>
+      <div class="login-form-wrap">
+        <div class="login-card">
+          <h2>Sign in</h2>
+          <p>Access your recruitment workspace.</p>
+          <label>Username</label><input type="text" id="loginUser">
+          <label>Password</label><input type="password" id="loginPass" onkeydown="if(event.key==='Enter')login(document.getElementById('loginUser').value, document.getElementById('loginPass').value)">
+          <button class="btn amber" style="margin-top:16px;width:100%;" onclick="login(document.getElementById('loginUser').value, document.getElementById('loginPass').value)">Sign in</button>
+          <div class="err" id="loginErr"></div>
+          <div class="demo-creds">admin/admin123 — admin<br>mona/mona123 — team lead<br>recruiter/recruiter123 · sara/sara123 · hassan/hassan123 — recruiters<br>viewer/viewer123 — read-only</div>
+        </div>
+      </div>
+    </div>
+  `));
+  document.getElementById("loginUser").focus();
+}
+
+// ---------- Shell ----------
+const NAV = [
+  {id:"dashboard", label:"Dashboard"},
+  {id:"jobs", label:"Jobs"},
+  {id:"candidates", label:"Candidates"},
+  {id:"matching", label:"Matching"},
+  {id:"campaigns", label:"Campaigns"},
+  {id:"pools", label:"Talent Pools"},
+  {id:"interviews", label:"Interviews"},
+  {id:"offers", label:"Offers"},
+  {id:"duplicates", label:"Duplicates"},
+  {id:"workflows", label:"Workflows"},
+  {id:"intelligence", label:"Intelligence"},
+  {id:"team", label:"Team"},
+  {id:"queue", label:"Call Queue"},
+  {id:"escalations", label:"Escalations"},
+  {id:"copilot", label:"AI Copilot"},
+  {id:"approvals", label:"Approvals"},
+  {id:"admin", label:"Admin"},
+];
+
+async function paint(){
+  if (!TOKEN){ renderLogin(); return; }
+  const root = document.getElementById("root");
+  root.innerHTML = `<div class="shell"><aside class="sidebar"><div class="brand"><span class="mark"></span><h1>Talent Loop</h1></div><nav id="nav"></nav><div class="sidebar-foot"><div><b>${ME?ME.username:''}</b> · ${ME?ME.role:''}</div><div style="margin-top:8px;cursor:pointer;text-decoration:underline;" onclick="logout()">Sign out</div></div></aside><main id="main"></main></div>`;
+  const nav = document.getElementById("nav");
+  const approvals = await api("/approvals").catch(()=>[]);
+  const pendingCount = approvals.filter(a=>a.status==="pending").length;
+  NAV.forEach(n=>{
+    if (n.id === "admin" && !(ME.role==="admin" || ME.role==="team_lead")) return;
+    const b = document.createElement("button");
+    b.className = n.id===route ? "active":"";
+    b.innerHTML = `<span>${n.label}</span>` + (n.id==="approvals"&&pendingCount>0?`<span class="badge">${pendingCount}</span>`:"");
+    b.onclick = ()=>{ route=n.id; paint(); };
+    nav.appendChild(b);
+  });
+  const renderers = {dashboard:renderDashboard, jobs:renderJobs, candidates:renderCandidates, matching:renderMatching, campaigns:renderCampaigns, pools:renderPools, interviews:renderInterviews, offers:renderOffers, duplicates:renderDuplicates, workflows:renderWorkflows, intelligence:renderIntelligence, team:renderTeam, queue:renderQueue, escalations:renderEscalations, copilot:renderCopilot, approvals:renderApprovals, admin:renderAdmin};
+  renderers[route](document.getElementById("main"));
+}
+
+// ---------- Dashboard ----------
+async function renderDashboard(main){
+  const [campaigns, candidates, sources] = await Promise.all([api("/campaigns"), api("/candidates"), api("/sources")]);
+  const camp = campaigns[0];
+  const stale = candidates.filter(c=>c.last_contact_days>3 && ["Contacted","Screening"].includes(c.stage));
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Good morning</h2><p>Here's where things stand across active hiring.</p></div></div>
+    <div class="kpis">
+      <div class="kpi" style="border-top-color:var(--teal);"><div class="label">Hiring target</div><div class="value">${camp.hires}/${camp.target}</div><div class="sub up">On track</div></div>
+      <div class="kpi"><div class="label">Qualified candidates</div><div class="value">${camp.qualified}</div><div class="sub">Across active jobs</div></div>
+      <div class="kpi" style="border-top-color:var(--amber);"><div class="label">Interviews this week</div><div class="value">${camp.interviews}</div><div class="sub down">Attendance ${Math.round(camp.attendance_rate*100)}%</div></div>
+      <div class="kpi" style="border-top-color:${stale.length>0?'var(--coral)':'var(--teal)'};"><div class="label">Overdue follow-ups</div><div class="value">${stale.length}</div><div class="sub down">Needs attention</div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h3>Recruitment funnel — ${camp.name}</h3></div>
+        ${camp.funnel.map(s=>`<div class="funnel-row"><div>${s.name}</div><div class="funnel-bar"><div class="funnel-fill" style="width:${Math.min(100, s.value/camp.clicks*100*3)}%"></div></div><div class="mono">${s.value}</div></div>`).join("")}
+        <div class="note">Primary bottleneck: <b>${camp.bottleneck.name}</b> — ${(camp.bottleneck.rate*100).toFixed(0)}% conversion from the previous stage, the weakest in the funnel.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Today's priorities</h3></div>
+        <table>
+          <tr><td>1</td><td>Follow up with ${stale.length} stale candidates</td></tr>
+          <tr><td>2</td><td>Review French B1 sourcing — behind target</td></tr>
+          <tr><td>3</td><td>Improve interview attendance (currently ${Math.round(camp.attendance_rate*100)}%)</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Source performance</h3></div>
+      <table><tr><th>Source</th><th>Applications</th><th>Qualified</th><th>Hires</th><th>Qualified rate</th></tr>
+        ${sources.map(s=>`<tr><td>${s.name}</td><td>${s.applications}</td><td>${s.qualified}</td><td>${s.hires}</td><td>${(s.qualified/s.applications*100).toFixed(0)}%</td></tr>`).join("")}
+      </table>
+    </div>
+  `));
+}
+
+// ---------- Jobs ----------
+async function renderJobs(main){
+  const jobs = await api("/jobs");
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Jobs</h2><p>Manage open roles and job intelligence.</p></div></div>
+    <div class="grid2">
+      <div class="panel"><div class="panel-head"><h3>Open roles</h3></div>
+        <table><tr><th>Role</th><th>Language</th><th>Location</th><th>Filled</th><th>Deadline</th><th>Landing page</th></tr>
+        ${jobs.map(j=>`<tr><td>${j.title}</td><td>${j.language} ${j.level}</td><td>${j.location}</td><td>${j.filled}/${j.vacancies}</td><td>${j.deadline}</td><td><a href="/api/landing/${j.id}" target="_blank">View</a></td></tr>`).join("")}
+        </table>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Import a job (AI extraction)</h3></div>
+        <textarea id="jobRaw" rows="6" placeholder="Paste an offer description here..."></textarea>
+        <button class="btn amber" style="margin-top:10px;" onclick="handleJobExtract()">Extract with AI</button>
+        <div id="jobExtractResult"></div>
+        <div class="note">Calls a real endpoint (POST /api/jobs/extract) that runs on the server. No live model is connected in this environment — it applies rule-based parsing and leaves unknown fields blank rather than guessing.</div>
+      </div>
+    </div>
+  `));
+}
+async function handleJobExtract(){
+  const raw = document.getElementById("jobRaw").value;
+  const out = document.getElementById("jobExtractResult");
+  if (!raw.trim()){ out.innerHTML = `<p class="note">Paste some text first.</p>`; return; }
+  const data = await api("/jobs/extract", {method:"POST", body:JSON.stringify({text:raw})});
+  out.innerHTML = `<div class="panel" style="margin-top:12px;background:var(--paper);">
+    <div class="row"><div><label>Language</label><div>${data.language || "Not detected"}</div></div><div><label>Level</label><div>${data.level || "Not detected"}</div></div></div>
+    <div class="row"><div><label>Education</label><div>${data.graduate ? "Graduate" : "Not specified"}</div></div><div><label>Work model</label><div>${data.work_model || "Not specified"}</div></div></div>
+    <div><label>Salary</label><div>${data.salary || "Not found in text — will not be invented"}</div></div>
+  </div>`;
+}
+
+// ---------- Candidates ----------
+async function renderCandidates(main){
+  const candidates = await api("/candidates");
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Candidates</h2><p>${candidates.length} in the database.</p></div>
+      <button class="btn ghost" onclick="toggleBulkImport()">Bulk import</button></div>
+    <div id="bulkImportBox" style="display:none;" class="panel">
+      <label>Paste rows as JSON: [{"name":"","phone":"","language":"","level":""}]</label>
+      <textarea id="bulkRows" rows="4"></textarea>
+      <button class="btn amber" style="margin-top:8px;" onclick="submitBulkImport()">Import & auto-assign</button>
+      <div id="bulkResult" class="note"></div>
+    </div>
+    <div class="panel">${candidates.map(c=>`
+      <div class="cand-card">
+        <div class="top"><div><h4>${c.name}</h4><div class="meta">${c.location} · ${c.education} · ${c.experience_years} yrs exp · via ${c.source} · owner: ${c.assigned_recruiter||'unassigned'}</div></div>
+        <span class="pill ${c.stage.toLowerCase()}">${c.stage}</span></div>
+        <div>${c.languages.map(l=>`<span class="tag">${l.lang} ${l.level}</span>`).join("")}${c.skills.map(s=>`<span class="tag">${s}</span>`).join("")}</div>
+        ${c.notes ? `<div class="why"><b>Note:</b> ${c.notes}</div>` : ""}
+        <div class="note">Last contact: ${c.last_contact_days} day(s) ago</div>
+        <div class="acts" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn small ghost" onclick="openScreening('${c.id}')">Screen with AI</button>
+          <select onchange="changeStage('${c.id}', this.value)" style="width:auto;font-size:12px;padding:4px 6px;">
+            <option value="">Change stage…</option>
+            ${["New","Contacted","Screening","Qualified","Interview","Selected","Offer","Hired","Rejected","On Hold"].map(s=>`<option value="${s}">${s}</option>`).join("")}
+          </select>
+          <select onchange="assignCandidate('${c.id}', this.value)" style="width:auto;font-size:12px;padding:4px 6px;">
+            <option value="">Reassign…</option>
+            ${TEAM_MEMBERS.map(r=>`<option value="${r}">${r}</option>`).join("")}
+          </select>
+          <button class="btn small ghost" onclick="toggleCvBox('${c.id}')">Paste CV</button>
+          <button class="btn small ghost" onclick="escalateCandidate('${c.id}')">Escalate</button>
+        </div>
+        <div id="cvbox-${c.id}" style="display:none;margin-top:8px;">
+          <textarea id="cvtext-${c.id}" rows="3" placeholder="Paste CV text..."></textarea>
+          <button class="btn small amber" style="margin-top:6px;" onclick="parseCv('${c.id}')">Parse & apply</button>
+          <div id="cvresult-${c.id}" class="note"></div>
+        </div>
+      </div>`).join("")}
+    </div>
+    <div id="screeningModalRoot"></div>
+  `));
+}
+let TEAM_MEMBERS = [];
+async function loadTeamMembers(){ TEAM_MEMBERS = await api("/team/members").catch(()=>[]); }
+async function assignCandidate(id, recruiter){
+  if (!recruiter) return;
+  await api(`/candidates/${id}/assign`, {method:"POST", body:JSON.stringify({recruiter})});
+  paint();
+}
+async function escalateCandidate(id){
+  const reason = prompt("What's the issue? (goes to the team lead)");
+  if (!reason) return;
+  await api("/escalations", {method:"POST", body:JSON.stringify({candidate_id:id, reason})});
+  alert("Escalated — visible in the Escalations tab.");
+}
+function toggleBulkImport(){
+  const box = document.getElementById("bulkImportBox");
+  box.style.display = box.style.display==="none" ? "block" : "none";
+}
+async function submitBulkImport(){
+  const out = document.getElementById("bulkResult");
+  let rows;
+  try { rows = JSON.parse(document.getElementById("bulkRows").value); }
+  catch(e){ out.textContent = "Invalid JSON."; return; }
+  const data = await api("/candidates/bulk-import", {method:"POST", body:JSON.stringify({rows})});
+  out.textContent = `Imported ${data.created.length} candidate(s), auto-assigned across the team. ${data.duplicate_suggestions_found} new duplicate suggestion(s) flagged.`;
+  setTimeout(paint, 1000);
+}
+async function changeStage(id, stage){
+  if (!stage) return;
+  await api(`/candidates/${id}/stage`, {method:"POST", body:JSON.stringify({stage})});
+  paint();
+}
+function toggleCvBox(id){
+  const box = document.getElementById(`cvbox-${id}`);
+  box.style.display = box.style.display==="none" ? "block" : "none";
+}
+async function parseCv(id){
+  const text = document.getElementById(`cvtext-${id}`).value;
+  const data = await api(`/candidates/${id}/cv-parse`, {method:"POST", body:JSON.stringify({text, apply:true})});
+  const out = document.getElementById(`cvresult-${id}`);
+  out.textContent = `Detected: education=${data.education||'—'} (${data.education_confidence}), experience=${data.experience_years ?? '—'} yrs (${data.experience_confidence}), languages=${data.languages.map(l=>l.lang+' '+l.level).join(', ')||'—'}, skills=${data.skills.join(', ')||'—'}. Applied to profile.`;
+  setTimeout(paint, 1200);
+}
+
+// ---------- Screening ----------
+async function openScreening(candidateId){
+  const data = await api("/screening/start", {method:"POST", body:JSON.stringify({candidate_id:candidateId})});
+  window._screenSession = {id:data.session_id, log:data.log, done:data.done};
+  paintScreeningModal();
+}
+function paintScreeningModal(){
+  const root = document.getElementById("screeningModalRoot");
+  const s = window._screenSession;
+  root.innerHTML = `<div class="modal-bg" onclick="if(event.target===this)closeScreening()"><div class="modal">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;"><b>AI Screening</b><span style="cursor:pointer;color:var(--muted);" onclick="closeScreening()">✕</span></div>
+    <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;">
+      ${s.log.map(m=>`<div class="msg ${m.role}" style="align-self:${m.role==='user'?'flex-end':'flex-start'};">${m.text}</div>`).join("")}
+    </div>
+    ${!s.done ? `<div class="chat-input"><input type="text" id="screenBox" onkeydown="if(event.key==='Enter'){submitScreening(this.value);this.value='';}"><button class="btn small amber" onclick="const i=document.getElementById('screenBox');submitScreening(i.value);i.value='';">Send</button></div>` : `<div style="padding:12px;"><button class="btn small ghost" onclick="closeScreening()">Close</button></div>`}
+  </div></div>`;
+}
+async function submitScreening(text){
+  if (!text) return;
+  const data = await api(`/screening/${window._screenSession.id}/answer`, {method:"POST", body:JSON.stringify({text})});
+  window._screenSession.log = data.log; window._screenSession.done = data.done;
+  paintScreeningModal();
+}
+function closeScreening(){ document.getElementById("screeningModalRoot").innerHTML=""; }
+
+// ---------- Matching ----------
+async function renderMatching(main){
+  const jobs = await api("/jobs");
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Matching</h2><p>Run the matching engine against a job to rank the whole database.</p></div></div>
+    <div class="panel"><label>Select a job</label><select id="matchJobSelect" onchange="renderMatchResults()">${jobs.map(j=>`<option value="${j.id}">${j.title}</option>`).join("")}</select></div>
+    <div id="matchResults"></div>
+  `));
+  renderMatchResults();
+}
+async function renderMatchResults(){
+  const sel = document.getElementById("matchJobSelect");
+  const jobId = sel ? sel.value : (await api("/jobs"))[0].id;
+  const data = await api(`/match/${jobId}`);
+  const container = document.getElementById("matchResults");
+  container.innerHTML = "";
+  container.appendChild(el(`<div class="panel"><div class="panel-head"><h3>Ranked candidates for ${data.job.title}</h3></div>${data.results.map(({candidate:c, match:m})=>{
+    const cls = m.score>=80?"hi":m.score>=55?"mid":"lo";
+    return `<div class="cand-card"><div class="top"><div><h4>${c.name}</h4><div class="meta">${c.location} · ${c.education} · ${c.experience_years} yrs</div></div>
+      <div style="text-align:right;">${m.eligible ? `<div class="score ${cls}">${m.score}</div><div class="note">${m.confidence}</div>` : `<div class="pill rejected">Not eligible</div>`}</div></div>
+      ${m.eligible ? `<div class="why"><b>Why:</b> ${m.breakdown.map(b=>`${b.factor} ${b.points}/${b.max}`).join(" · ")}</div>${m.concerns.length?`<div class="why"><b>Concern:</b> ${m.concerns.join(" ")}</div>`:""}` : `<div class="why"><b>Reason:</b> ${m.reason}</div>`}
+    </div>`;
+  }).join("")}</div>`));
+}
+
+// ---------- Campaigns ----------
+async function renderCampaigns(main){
+  const campaigns = await api("/campaigns");
+  const camp = campaigns[0];
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Campaigns</h2><p>Active campaign performance.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>${camp.name}</h3><span class="pill contacted">${camp.status}</span></div>
+      <div class="row"><div><label>Target</label><div>${camp.target} hires</div></div><div><label>Progress</label><div>${camp.hires} hires (${Math.round(camp.hires/camp.target*100)}%)</div></div><div><label>Reach</label><div>${camp.reach.toLocaleString()}</div></div></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${camp.hires/camp.target*100}%"></div></div>
+      <div class="note" style="margin-top:12px;">Bottleneck: <b>${camp.bottleneck.name}</b> at ${(camp.bottleneck.rate*100).toFixed(0)}% conversion — lower than every other transition.</div>
+    </div>
+  `));
+}
+
+// ---------- Talent pools ----------
+async function renderPools(main){
+  const pools = await api("/pools");
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Talent Pools</h2><p>Dynamically grouped by language.</p></div></div>
+    <div class="grid2">${Object.entries(pools).map(([lang,list])=>`<div class="panel"><div class="panel-head"><h3>${lang} speakers</h3><span class="pill new">${list.length}</span></div>${list.map(c=>`<div class="meta" style="margin-bottom:6px;">${c.name} — ${c.level}</div>`).join("")}</div>`).join("")}</div>
+  `));
+}
+
+// ---------- Interviews / Offers ----------
+async function renderInterviews(main){
+  const [interviews, jobs, candidates] = await Promise.all([api("/interviews"), api("/jobs"), api("/candidates")]);
+  const jm = Object.fromEntries(jobs.map(j=>[j.id,j])); const cm = Object.fromEntries(candidates.map(c=>[c.id,c]));
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Interviews</h2></div></div>
+    <div class="panel"><table><tr><th>Candidate</th><th>Job</th><th>Interviewer</th><th>Date</th><th>Status</th><th>Notes</th></tr>
+      ${interviews.map(i=>`<tr><td>${cm[i.candidate_id].name}</td><td>${jm[i.job_id].title}</td><td>${i.interviewer}</td><td class="mono">${i.date}</td><td><span class="pill ${i.status.toLowerCase().replace(' ','-')}">${i.status}</span></td><td>${i.feedback||""}</td></tr>`).join("")}
+    </table></div>
+  `));
+}
+async function renderOffers(main){
+  const [offers, jobs, candidates] = await Promise.all([api("/offers"), api("/jobs"), api("/candidates")]);
+  const jm = Object.fromEntries(jobs.map(j=>[j.id,j])); const cm = Object.fromEntries(candidates.map(c=>[c.id,c]));
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Offers</h2></div></div>
+    <div class="panel"><table><tr><th>Candidate</th><th>Job</th><th>Status</th><th>Sent</th></tr>
+      ${offers.map(o=>`<tr><td>${cm[o.candidate_id].name}</td><td>${jm[o.job_id].title}</td><td><span class="pill contacted">${o.status}</span></td><td>${o.sent_at||"—"}</td></tr>`).join("")}
+    </table><div class="note">Pipeline: Draft → Sent → Viewed → Accepted → Declined</div></div>
+  `));
+}
+
+// ---------- Duplicates ----------
+async function renderDuplicates(main){
+  const dupes = await api("/duplicates");
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Duplicate Candidates</h2><p>Fuzzy-matched suggestions — never auto-merged.</p></div>
+      <button class="btn ghost" onclick="refreshDuplicates()">Rescan</button></div>
+    <div class="panel" id="dupList">${dupes.length===0 ? `<div class="empty">No pending duplicate suggestions.</div>` : dupes.map(d=>`
+      <div class="cand-card">
+        <div class="top"><div><h4>${d.candidate_a_name} ↔ ${d.candidate_b_name}</h4><div class="meta">${d.reason}</div></div>
+        <div class="score ${d.score>=0.8?'hi':'mid'}">${Math.round(d.score*100)}%</div></div>
+        <div class="acts" style="margin-top:8px;">
+          <button class="btn small" onclick="mergeDuplicate(${d.id},'${d.candidate_a}')">Keep ${d.candidate_a_name}</button>
+          <button class="btn small ghost" onclick="mergeDuplicate(${d.id},'${d.candidate_b}')">Keep ${d.candidate_b_name}</button>
+          <button class="btn small ghost" onclick="rejectDuplicate(${d.id})">Not a duplicate</button>
+        </div>
+      </div>`).join("")}
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Data quality issues</h3></div><div id="dqList">Loading…</div></div>
+  `));
+  const dq = await api("/data-quality");
+  document.getElementById("dqList").innerHTML = dq.length===0 ? `<div class="empty">No issues found.</div>` :
+    `<table>${dq.map(i=>`<tr><td>${i.name}</td><td>${i.issue}</td></tr>`).join("")}</table>`;
+}
+async function refreshDuplicates(){ await api("/duplicates/refresh", {method:"POST", body:"{}"}); paint(); }
+async function mergeDuplicate(id, keep){ await api(`/duplicates/${id}/merge`, {method:"POST", body:JSON.stringify({keep})}); paint(); }
+async function rejectDuplicate(id){ await api(`/duplicates/${id}/reject`, {method:"POST", body:"{}"}); paint(); }
+
+// ---------- Workflows ----------
+async function renderWorkflows(main){
+  const [workflows, executions] = await Promise.all([api("/workflows"), api("/workflows/executions")]);
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Workflows</h2><p>Describe a workflow in plain language — it's created as a draft for you to review.</p></div></div>
+    <div class="panel">
+      <textarea id="wfText" rows="2" placeholder="e.g. When a German B2 candidate scores above 85, notify me and add them to interview pool."></textarea>
+      <button class="btn amber" style="margin-top:8px;" onclick="createWorkflowNL()">Parse & create draft</button>
+      <div id="wfParseResult"></div>
+      <div class="note">Supported patterns: score-threshold triggers, application-received messages, attendance-rate alerts. Anything else returns a clear "couldn't parse" message rather than guessing.</div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>All workflows</h3></div>
+      ${workflows.length===0 ? `<div class="empty">None yet.</div>` : workflows.map(w=>`
+        <div class="cand-card"><div class="top"><div><h4>${w.name}</h4><div class="meta">trigger: ${w.trigger_type} · ${w.conditions.length} condition(s) · ${w.actions.length} action(s)</div></div>
+        <span class="pill ${w.status==='active'?'qualified':w.status==='paused'?'rejected':'new'}">${w.status}</span></div>
+        <div class="acts" style="margin-top:8px;">
+          ${w.status!=='active' ? `<button class="btn small" onclick="toggleWorkflow('${w.id}','activate')">Activate</button>` : `<button class="btn small ghost" onclick="toggleWorkflow('${w.id}','pause')">Pause</button>`}
+        </div></div>
+      `).join("")}
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Execution log</h3></div>
+      ${executions.length===0 ? `<div class="empty">No executions yet.</div>` : `<table>${executions.map(e=>`<tr><td class="mono">${e.ts}</td><td>${e.detail}</td></tr>`).join("")}</table>`}
+    </div>
+  `));
+}
+async function createWorkflowNL(){
+  const text = document.getElementById("wfText").value;
+  const out = document.getElementById("wfParseResult");
+  const data = await api("/workflows/nl", {method:"POST", body:JSON.stringify({text})});
+  if (!data.ok){ out.innerHTML = `<div class="note" style="color:var(--coral);margin-top:8px;">${data.reason}</div>`; return; }
+  out.innerHTML = `<div class="note" style="margin-top:8px;">Created as draft: <b>${data.preview.name}</b>. Go activate it below when ready.</div>`;
+  setTimeout(paint, 800);
+}
+async function toggleWorkflow(id, action){ await api(`/workflows/${id}/${action}`, {method:"POST", body:"{}"}); paint(); }
+
+// ---------- Intelligence ----------
+async function renderIntelligence(main){
+  const briefing = await api("/intelligence/daily-briefing");
+  const forecast = await api("/intelligence/forecast/CAMP1?days=10&metric=hires");
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Recruitment Intelligence</h2><p>Generated ${briefing.generated_at}.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Today's priorities</h3></div>
+      <table>${briefing.priorities.map((p,i)=>`<tr><td>${i+1}</td><td>${p}</td></tr>`).join("")}</table>
+    </div>
+    <div class="grid2">
+      <div class="panel"><div class="panel-head"><h3>Recommendations (evidence-backed)</h3></div>
+        ${briefing.recommendations.map(r=>`<div class="why" style="margin-bottom:10px;"><b>${r.text}</b><br>${r.evidence}</div>`).join("") || `<div class="empty">None right now.</div>`}
+      </div>
+      <div class="panel"><div class="panel-head"><h3>Hiring health</h3></div>
+        <table>${briefing.health.map(h=>`<tr><td><span class="dot ${h.status==='green'?'g':h.status==='yellow'?'y':'r'}"></span>${h.title}</td><td>${h.reason}</td></tr>`).join("")}</table>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Anomalies detected</h3></div>
+      ${briefing.anomalies.length===0 ? `<div class="empty">Nothing unusual right now.</div>` : briefing.anomalies.map(a=>`<div class="why">${a.note}</div>`).join("")}
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Forecast — hires, next 10 days (German B2 Campaign)</h3></div>
+      ${forecast.status==='ok' ? `<div class="note">${forecast.assumptions} Confidence: ${forecast.confidence}.</div>
+      <table><tr><th>Date</th><th>Projected</th><th>Range</th></tr>${forecast.projections.slice(0,6).map(p=>`<tr><td class="mono">${p.date}</td><td>${p.projected}</td><td>${p.low}–${p.high}</td></tr>`).join("")}</table>` : `<div class="empty">Not enough history yet.</div>`}
+    </div>
+  `));
+}
+
+// ---------- Admin Console (tabbed: Overview, Jobs, Offers, Sources, Users) ----------
+let adminTab = "overview";
+async function renderAdmin(main){
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Admin Console</h2><p>System controls and full edit access.</p></div></div>
+    <div class="suggest" style="margin-bottom:16px;">
+      ${["overview","jobs","offers","sources"].map(t=>`<button style="${adminTab===t?'background:var(--ink);color:#fff;':''}" onclick="switchAdminTab('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}
+      ${ME.role==='admin' ? `<button style="${adminTab==='users'?'background:var(--ink);color:#fff;':''}" onclick="switchAdminTab('users')">Users</button>` : ""}
+    </div>
+    <div id="adminTabBody"></div>
+  `));
+  await paintAdminTab();
+}
+function switchAdminTab(t){ adminTab = t; paintAdminTab(); }
+async function paintAdminTab(){
+  const body = document.getElementById("adminTabBody");
+  if (!body) return;
+  body.innerHTML = `<div class="empty">Loading…</div>`;
+  if (adminTab === "overview") return renderAdminOverview(body);
+  if (adminTab === "jobs") return renderAdminJobs(body);
+  if (adminTab === "offers") return renderAdminOffers(body);
+  if (adminTab === "sources") return renderAdminSources(body);
+  if (adminTab === "users") return renderAdminUsers(body);
+}
+
+async function renderAdminOverview(body){
+  const [ks, integ, outbox] = await Promise.all([api("/killswitch"), api("/integrations"), api("/outbox")]);
+  body.innerHTML = "";
+  body.appendChild(el(`
+    <div class="panel"><div class="panel-head"><h3>Global kill switch</h3></div>
+      <p class="note">Halts workflow execution and campaign-drafting tool calls immediately.</p>
+      <span class="pill ${ks.active?'rejected':'qualified'}">${ks.active ? 'ACTIVE — automations paused' : 'Inactive — automations running'}</span>
+      <div style="margin-top:10px;">
+        ${ME.role==='admin' ? `<button class="btn ${ks.active?'ghost':''}" onclick="toggleKillSwitch(${!ks.active})">${ks.active?'Deactivate':'Activate'}</button>` : `<div class="note">Admin role required.</div>`}
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Integration adapters</h3></div>
+      <table><tr><th>Channel</th><th>Status</th><th>Env var to activate</th></tr>
+      ${Object.entries(integ).map(([ch,s])=>`<tr><td>${ch}</td><td><span class="pill ${s.configured?'qualified':'new'}">${s.configured?'Configured (live)':'Mock (not configured)'}</span></td><td class="mono">${s.env_var}</td></tr>`).join("")}
+      </table>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Outbox (mock + live sends)</h3></div>
+      ${outbox.length===0 ? `<div class="empty">Nothing sent yet.</div>` : `<table><tr><th>Time</th><th>Channel</th><th>To</th><th>Status</th></tr>${outbox.map(o=>`<tr><td class="mono">${o.ts}</td><td>${o.channel}</td><td>${o.recipient}</td><td><span class="pill ${o.status.includes('sent')?'qualified':'rejected'}">${o.status}</span></td></tr>`).join("")}</table>`}
+    </div>
+  `));
+}
+async function toggleKillSwitch(activate){
+  await api(`/killswitch/${activate?'activate':'deactivate'}`, {method:"POST", body:"{}"});
+  paintAdminTab();
+}
+
+async function renderAdminJobs(body){
+  const jobs = await api("/jobs");
+  body.innerHTML = "";
+  body.appendChild(el(`
+    <div class="panel"><div class="panel-head"><h3>Add a job</h3></div>
+      <div class="row"><div><label>Title</label><input id="nj_title"></div><div><label>Language</label><input id="nj_language" value="English"></div><div><label>Level</label><input id="nj_level" value="B2"></div></div>
+      <div class="row"><div><label>Location</label><input id="nj_location"></div><div><label>Work model</label><input id="nj_work_model" value="On-site"></div><div><label>Vacancies</label><input id="nj_vacancies" type="number" value="10"></div></div>
+      <div class="row"><div><label>Deadline (YYYY-MM-DD)</label><input id="nj_deadline"></div><div><label>Salary</label><input id="nj_salary"></div></div>
+      <button class="btn amber" style="margin-top:10px;" onclick="createJob()">Create job</button>
+      <div id="nj_result" class="note"></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>All jobs — click a cell to edit</h3></div>
+      <table><tr><th>ID</th><th>Title</th><th>Filled</th><th>Vacancies</th><th>Status</th><th>Deadline</th></tr>
+      ${jobs.map(j=>`<tr>
+        <td class="mono">${j.id}</td>
+        <td>${j.title}</td>
+        <td contenteditable="true" onblur="updateJobField('${j.id}','filled',this.textContent)">${j.filled}</td>
+        <td contenteditable="true" onblur="updateJobField('${j.id}','vacancies',this.textContent)">${j.vacancies}</td>
+        <td><select onchange="updateJobField('${j.id}','status',this.value)"><option ${j.status==='open'?'selected':''}>open</option><option ${j.status==='closed'?'selected':''}>closed</option><option ${j.status==='on_hold'?'selected':''}>on_hold</option></select></td>
+        <td contenteditable="true" onblur="updateJobField('${j.id}','deadline',this.textContent)">${j.deadline||''}</td>
+      </tr>`).join("")}
+      </table>
+      <div class="note">Edit any cell directly, click outside to save.</div>
+    </div>
+  `));
+}
+async function createJob(){
+  const body = {title:val('nj_title'), language:val('nj_language'), level:val('nj_level'), location:val('nj_location'),
+    work_model:val('nj_work_model'), vacancies:parseInt(val('nj_vacancies')||'1'), deadline:val('nj_deadline'), salary:val('nj_salary')};
+  const res = await api("/jobs", {method:"POST", body:JSON.stringify(body)});
+  document.getElementById("nj_result").textContent = res.ok ? `Created ${res.id}.` : (res.error||"Failed.");
+  if (res.ok) setTimeout(()=>paintAdminTab(), 600);
+}
+function val(id){ const e=document.getElementById(id); return e?e.value:''; }
+async function updateJobField(jobId, field, value){
+  const body = {}; body[field] = (field==='filled'||field==='vacancies') ? parseInt(value)||0 : value;
+  await fetch(`/api/jobs/${jobId}`, {method:"PATCH", headers:{"Authorization":"Bearer "+TOKEN,"Content-Type":"application/json"}, body:JSON.stringify(body)});
+}
+
+async function renderAdminOffers(body){
+  const [offers, jobs, candidates] = await Promise.all([api("/offers"), api("/jobs"), api("/candidates")]);
+  const jm = Object.fromEntries(jobs.map(j=>[j.id,j])); const cm = Object.fromEntries(candidates.map(c=>[c.id,c]));
+  body.innerHTML = "";
+  body.appendChild(el(`
+    <div class="panel"><div class="panel-head"><h3>Add an offer</h3></div>
+      <div class="row"><div><label>Candidate ID</label><input id="no_cand" placeholder="C1"></div><div><label>Job ID</label><input id="no_job" placeholder="J1"></div><div><label>Status</label>
+        <select id="no_status"><option>Draft</option><option>Sent</option><option>Viewed</option><option>Accepted</option><option>Declined</option></select></div></div>
+      <button class="btn amber" style="margin-top:10px;" onclick="createOffer()">Create offer</button>
+      <div id="no_result" class="note"></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>All offers</h3></div>
+      <table><tr><th>ID</th><th>Candidate</th><th>Job</th><th>Status</th><th>Sent</th></tr>
+      ${offers.map(o=>`<tr><td class="mono">${o.id}</td><td>${cm[o.candidate_id]?.name||o.candidate_id}</td><td>${jm[o.job_id]?.title||o.job_id}</td>
+        <td><select onchange="updateOfferStatus('${o.id}',this.value)"><option ${o.status==='Draft'?'selected':''}>Draft</option><option ${o.status==='Sent'?'selected':''}>Sent</option><option ${o.status==='Viewed'?'selected':''}>Viewed</option><option ${o.status==='Accepted'?'selected':''}>Accepted</option><option ${o.status==='Declined'?'selected':''}>Declined</option></select></td>
+        <td>${o.sent_at||'—'}</td></tr>`).join("")}
+      </table>
+    </div>
+  `));
+}
+async function createOffer(){
+  const body = {candidate_id:val('no_cand'), job_id:val('no_job'), status:val('no_status')};
+  const res = await api("/offers", {method:"POST", body:JSON.stringify(body)});
+  document.getElementById("no_result").textContent = res.ok ? `Created ${res.id}.` : (res.error||"Failed.");
+  if (res.ok) setTimeout(()=>paintAdminTab(), 600);
+}
+async function updateOfferStatus(offerId, status){
+  await fetch(`/api/offers/${offerId}`, {method:"PATCH", headers:{"Authorization":"Bearer "+TOKEN,"Content-Type":"application/json"}, body:JSON.stringify({status})});
+}
+
+async function renderAdminSources(body){
+  const sources = await api("/sources");
+  body.innerHTML = "";
+  body.appendChild(el(`
+    <div class="panel"><div class="panel-head"><h3>Add a source</h3></div>
+      <div class="row"><div><label>Name</label><input id="ns_name"></div><div><label>Applications</label><input id="ns_apps" type="number" value="0"></div><div><label>Qualified</label><input id="ns_qual" type="number" value="0"></div><div><label>Hires</label><input id="ns_hires" type="number" value="0"></div></div>
+      <button class="btn amber" style="margin-top:10px;" onclick="createSource()">Add source</button>
+      <div id="ns_result" class="note"></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>All sources</h3></div>
+      <table><tr><th>Name</th><th>Applications</th><th>Qualified</th><th>Hires</th></tr>
+      ${sources.map(s=>`<tr><td>${s.name}</td>
+        <td contenteditable="true" onblur="updateSourceField(${s.id},'applications',this.textContent)">${s.applications}</td>
+        <td contenteditable="true" onblur="updateSourceField(${s.id},'qualified',this.textContent)">${s.qualified}</td>
+        <td contenteditable="true" onblur="updateSourceField(${s.id},'hires',this.textContent)">${s.hires}</td></tr>`).join("")}
+      </table>
+    </div>
+  `));
+}
+async function createSource(){
+  const body = {name:val('ns_name'), applications:parseInt(val('ns_apps')||'0'), qualified:parseInt(val('ns_qual')||'0'), hires:parseInt(val('ns_hires')||'0')};
+  const res = await api("/sources", {method:"POST", body:JSON.stringify(body)});
+  document.getElementById("ns_result").textContent = res.ok ? "Added." : (res.error||"Failed.");
+  if (res.ok) setTimeout(()=>paintAdminTab(), 600);
+}
+async function updateSourceField(id, field, value){
+  const body = {}; body[field] = parseInt(value)||0;
+  await fetch(`/api/sources/${id}`, {method:"PATCH", headers:{"Authorization":"Bearer "+TOKEN,"Content-Type":"application/json"}, body:JSON.stringify(body)});
+}
+
+async function renderAdminUsers(body){
+  const users = await api("/admin/users");
+  body.innerHTML = "";
+  body.appendChild(el(`
+    <div class="panel"><div class="panel-head"><h3>Add a team member</h3></div>
+      <div class="row"><div><label>Username</label><input id="nu_user"></div><div><label>Password</label><input id="nu_pass" type="password"></div>
+        <div><label>Role</label><select id="nu_role"><option value="viewer">viewer</option><option value="recruiter" selected>recruiter</option><option value="team_lead">team_lead</option><option value="admin">admin</option></select></div></div>
+      <button class="btn amber" style="margin-top:10px;" onclick="createUser()">Create account</button>
+      <div id="nu_result" class="note"></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>All accounts</h3></div>
+      <table><tr><th>Username</th><th>Role</th><th>Status</th><th></th></tr>
+      ${users.map(u=>`<tr><td>${u.username}</td>
+        <td><select onchange="updateUserRole('${u.username}',this.value)" ${u.username===ME.username?'disabled':''}>
+          ${["viewer","recruiter","team_lead","admin"].map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join("")}
+        </select></td>
+        <td><span class="pill ${u.active?'qualified':'rejected'}">${u.active?'active':'deactivated'}</span></td>
+        <td>${u.username!==ME.username ? `<button class="btn small ghost" onclick="toggleUserActive('${u.username}',${!u.active})">${u.active?'Deactivate':'Activate'}</button>` : `<span class="note">(you)</span>`}</td>
+      </tr>`).join("")}
+      </table>
+    </div>
+  `));
+}
+async function createUser(){
+  const body = {username:val('nu_user'), password:val('nu_pass'), role:val('nu_role')};
+  const res = await api("/admin/users", {method:"POST", body:JSON.stringify(body)});
+  document.getElementById("nu_result").textContent = res.ok ? `Created ${res.username} (${res.role}).` : (res.error||"Failed.");
+  if (res.ok) setTimeout(()=>paintAdminTab(), 600);
+}
+async function updateUserRole(username, role){
+  await fetch(`/api/admin/users/${username}`, {method:"PATCH", headers:{"Authorization":"Bearer "+TOKEN,"Content-Type":"application/json"}, body:JSON.stringify({role})});
+  paintAdminTab();
+}
+async function toggleUserActive(username, active){
+  await fetch(`/api/admin/users/${username}`, {method:"PATCH", headers:{"Authorization":"Bearer "+TOKEN,"Content-Type":"application/json"}, body:JSON.stringify({active})});
+  paintAdminTab();
+}
+
+// ---------- Team (workload + leaderboard) ----------
+async function renderTeam(main){
+  const [workload, leaderboard, weekly] = await Promise.all([api("/team/workload"), api("/leaderboard"), api("/team/weekly-report")]);
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Team</h2><p>Workload and fair, difficulty-adjusted performance.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Workload by recruiter</h3></div>
+      <table><tr><th>Recruiter</th><th>Assigned</th><th>Overdue</th><th>Calls this week</th><th>Daily goal</th></tr>
+      ${workload.recruiters.map(r=>`<tr><td>${r.recruiter}</td><td>${r.total_assigned}</td><td>${r.overdue>0?'<b style="color:var(--coral)">'+r.overdue+'</b>':r.overdue}</td><td>${r.calls_this_week}</td><td>${r.daily_goal}</td></tr>`).join("")}
+      </table>
+      ${workload.unassigned_candidates>0 ? `<div class="note" style="margin-top:8px;">${workload.unassigned_candidates} candidate(s) unassigned.</div>` : ""}
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Fair leaderboard (difficulty-adjusted)</h3></div>
+      <table><tr><th>Recruiter</th><th>Assigned</th><th>Hires</th><th>Raw rate</th><th>Avg difficulty</th><th>Adjusted score</th></tr>
+      ${leaderboard.map(l=>`<tr><td>${l.recruiter}</td><td>${l.assigned_count}</td><td>${l.hires}</td><td>${(l.raw_hire_rate*100).toFixed(0)}%</td><td>${l.avg_caseload_difficulty}×</td><td><b>${l.adjusted_score}</b></td></tr>`).join("")}
+      </table>
+      <div class="note">Adjusted score rewards recruiters handling harder caseloads (recycled candidates, rare languages, no-experience candidates) for the same raw hire rate.</div>
+    </div>
+    <div class="panel"><div class="panel-head"><h3>This week vs last</h3></div>
+      <p>Calls: ${weekly.calls_this_week} this week vs ${weekly.calls_last_week} last week (${weekly.calls_trend>=0?'+':''}${weekly.calls_trend}).</p>
+      ${weekly.team_needs_attention.length>0 ? `<div class="why"><b>Needs attention:</b> ${weekly.team_needs_attention.map(a=>`${a.recruiter} (${a.calls_this_week} calls, ${a.overdue_follow_ups} overdue)`).join('; ')}</div>` : `<div class="note">No one needs attention this week.</div>`}
+    </div>
+  `));
+}
+
+// ---------- Call Queue ----------
+async function renderQueue(main){
+  const recruiter = ME.role === 'admin' ? null : ME.username;
+  const queue = await api(`/queue${recruiter ? '?recruiter='+recruiter : ''}`);
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Call Queue</h2><p>${recruiter ? 'Your' : 'Team'} smart callback queue — ranked by urgency, deadline pressure, and best time to call.</p></div></div>
+    <div class="panel">${queue.length===0 ? `<div class="empty">Nothing in the queue right now.</div>` : queue.map(q=>`
+      <div class="cand-card">
+        <div class="top"><div><h4>${q.candidate.name}</h4><div class="meta">${q.candidate.location} · ${q.candidate.stage} · assigned: ${q.candidate.assigned_recruiter||'unassigned'}</div></div>
+        <div class="score ${q.priority==='callback_due'?'lo':q.score>=60?'hi':'mid'}">${q.priority==='callback_due'?'CALLBACK':q.score}</div></div>
+        <div class="why">${q.reason}</div>
+        <div class="acts" style="margin-top:8px;">
+          ${["answered","no_answer","voicemail","interested","not_interested","callback_requested"].map(o=>`<button class="btn small ghost" onclick="logCall('${q.candidate.id}','${o}')">${o.replace('_',' ')}</button>`).join("")}
+        </div>
+      </div>`).join("")}
+    </div>
+  `));
+}
+async function logCall(candidateId, outcome){
+  let objection_reason = null;
+  if (outcome === 'not_interested'){
+    objection_reason = prompt("Reason? (salary, shift, location, language_level, timing, already_placed, other)", "other");
+  }
+  await api("/calls", {method:"POST", body:JSON.stringify({candidate_id:candidateId, outcome, objection_reason})});
+  paint();
+}
+
+// ---------- Escalations ----------
+async function renderEscalations(main){
+  const [open, resolved] = await Promise.all([api("/escalations?status=open"), api("/escalations?status=resolved")]);
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Escalations</h2><p>Cases a recruiter raised for team-lead attention.</p></div></div>
+    <div class="panel"><div class="panel-head"><h3>Open (${open.length})</h3></div>
+      ${open.length===0 ? `<div class="empty">Nothing open.</div>` : open.map(e=>`
+        <div class="approval-card"><div class="hdr">Candidate ${e.candidate_id} — raised by ${e.raised_by}</div><div>${e.reason}</div>
+          <div class="acts">
+            ${(ME.role==='admin'||ME.role==='recruiter') ? `<button class="btn small" onclick="resolveEscalation(${e.id})">Resolve</button>` : ""}
+          </div>
+        </div>`).join("")}
+    </div>
+    <div class="panel"><div class="panel-head"><h3>Resolved</h3></div>
+      ${resolved.length===0 ? `<div class="empty">None yet.</div>` : `<table><tr><th>Candidate</th><th>Reason</th><th>Resolution</th></tr>${resolved.map(e=>`<tr><td>${e.candidate_id}</td><td>${e.reason}</td><td>${e.resolution_note||''}</td></tr>`).join("")}</table>`}
+    </div>
+  `));
+}
+async function resolveEscalation(id){
+  const note = prompt("Resolution note?", "Handled.");
+  if (note === null) return;
+  await api(`/escalations/${id}/resolve`, {method:"POST", body:JSON.stringify({note})});
+  paint();
+}
+
+// ---------- Copilot ----------
+function renderCopilot(main){
+  main.appendChild(el(`
+    <div class="topline"><div><h2>AI Copilot</h2><p>Ask about candidates, jobs, or campaign performance using live system data.</p></div></div>
+    <div class="copilot">
+      <div class="chatwrap">
+        <div class="chatlog" id="chatlog"></div>
+        <div class="suggest">
+          <button onclick="sendChat('Find German candidates for J1')">Find German candidates for J1</button>
+          <button onclick="sendChat('Find candidates we contacted before but never hired')">Never hired but contacted</button>
+          <button onclick="sendChat('Match all candidates against J2')">Match all candidates against J2</button>
+          <button onclick="sendChat('Create screening questions for J3')">Create screening questions for J3</button>
+          <button onclick="sendChat('What should I do today?')">What should I do today?</button>
+          <button onclick="sendChat('Why is the campaign underperforming?')">Why is the campaign underperforming?</button>
+          <button onclick="sendChat('Create a campaign for J3')">Create a campaign for J3</button>
+        </div>
+        <div class="chat-input"><input type="text" id="chatBox" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn amber" onclick="sendChat()">Send</button></div>
+      </div>
+      <div class="panel" style="overflow-y:auto;"><div class="panel-head"><h3>Tool activity</h3></div><div id="toolActivity" class="note">No tool calls yet this session.</div></div>
+    </div>
+  `));
+  paintChat();
+}
+function paintChat(){
+  const log = document.getElementById("chatlog");
+  if (!log) return;
+  log.innerHTML = chatMessages.map(m=>`<div class="msg ${m.role}">${m.text}</div>`).join("");
+  log.scrollTop = log.scrollHeight;
+}
+async function sendChat(preset){
+  const box = document.getElementById("chatBox");
+  const text = preset || box.value.trim();
+  if (!text) return;
+  chatMessages.push({role:"user", text}); box.value=""; paintChat();
+  const data = await api("/copilot", {method:"POST", body:JSON.stringify({text})});
+  chatMessages.push({role:"ai", text:data.reply}); paintChat();
+  const activity = document.getElementById("toolActivity");
+  if (activity) activity.innerHTML = data.tool ? `<div class="mono">${data.tool}()</div><div>Ran against the live database via /api/copilot.</div>` : "No tool call needed for that message.";
+}
+
+// ---------- Approvals ----------
+async function renderApprovals(main){
+  const [approvals, audit] = await Promise.all([api("/approvals"), api("/audit")]);
+  main.appendChild(el(`
+    <div class="topline"><div><h2>Approvals</h2><p>Actions the AI has prepared but not executed.</p></div></div>
+    <div class="panel">${approvals.length===0 ? `<div class="empty">Nothing waiting on you right now.</div>` : approvals.map(a=>`
+      <div class="approval-card"><div class="hdr">${a.title}</div><div>${a.detail}</div>
+        <div class="acts">${a.status==="pending" ? `<button class="btn small" onclick="actOnApproval(${a.id},'approve')">Approve</button><button class="btn small ghost" onclick="actOnApproval(${a.id},'reject')">Reject</button>` : `<span class="pill ${a.status==='approved'?'qualified':'rejected'}">${a.status}</span>`}</div>
+      </div>`).join("")}
+    </div>
+    <div class="panel"><div class="panel-head"><h3>AI action history</h3></div>
+      ${audit.length===0 ? `<div class="empty">No actions yet.</div>` : `<table>${audit.map(a=>`<tr><td class="mono">${a.ts}</td><td>${a.actor}</td><td>${a.action}</td><td>${a.detail}</td></tr>`).join("")}</table>`}
+    </div>
+  `));
+}
+async function actOnApproval(id, action){
+  const res = await api(`/approvals/${id}/${action}`, {method:"POST"});
+  if (res.error) { alert(res.error); return; }
+  renderApprovals(document.getElementById("main")).catch(()=>{});
+  paint();
+}
+
+// ---------- Boot ----------
+(async function boot(){
+  if (TOKEN){
+    try { ME = await api("/me"); await loadTeamMembers(); } catch(e){ TOKEN=null; }
+  }
+  paint();
+})();
+</script>
+</body>
+</html>
